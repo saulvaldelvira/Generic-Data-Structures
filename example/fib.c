@@ -18,7 +18,7 @@
 
 Vector *fib_cache;
 
-double fib(int n){
+double fib(size_t n){
 	double f;
 	if (vector_size(fib_cache) > n){
 		vector_at(fib_cache, n, &f);
@@ -35,7 +35,7 @@ double fib(int n){
 	return f;
 }
 
-double main(int argc, char *argv[]){
+int main(int argc, char *argv[]){
 	fib_cache = vector_init(sizeof(double), compare_double) ;
 	vector_append(fib_cache, &(double){0.0});
 	vector_append(fib_cache, &(double){1.0});

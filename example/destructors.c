@@ -13,7 +13,7 @@ void destroy_person(void *p){
         free(person.name);
 }
 
-int main(){
+int main(void){
         Vector *v = vector_init(sizeof(char*), compare_equal);
         // The destructor will treat every element in the
         // vector as a pointer that must be freed

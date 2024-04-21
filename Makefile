@@ -1,4 +1,4 @@
-.PHONY: default clean libs test install uninstall doxygen
+.PHONY: default clean libs test examples install uninstall doxygen
 
 SRC = src
 BIN = bin
@@ -6,6 +6,7 @@ BIN = bin
 CFILES = $(wildcard $(SRC)/*.c) $(wildcard $(SRC)/*/*.c)
 OFILES = $(patsubst %.c,%.o,$(CFILES))
 TESTFILES = $(wildcard test/*)
+EXAMPLES = $(wildcard example/*.c)
 
 CC = cc
 CCFLAGS += -Wall -Wextra -pedantic -std=c99 -Wstrict-prototypes -g -fPIC -O3
@@ -49,6 +50,11 @@ test: $(TESTFILES) libs | $(BIN)/
 	@ $(foreach T,$(filter %.c,$(TESTFILES)), \
 	  $(CC) $(CCFLAGS) -o $(BIN)/$(patsubst %.c,%.out, $(notdir $(T))) $(T) -L./$(BIN)/ -lGDS-static; \
 	  $(NO-RUN) || $(BIN)/$(patsubst %.c,%.out, $(notdir $(T))) || exit 1;)
+
+examples: $(EXAMPLES) $(BIN)/libGDS-static.a | $(BIN)/
+	@ $(foreach F,$(EXAMPLES), \
+		echo " CC $(F)" ; \
+		$(CC) $(CCFLAGS) -o $(patsubst example/%.c,bin/%,$(F)) $(F) -lGDS-static ;)
 
 doxygen: ./doxygen/
 	@ echo -e "\

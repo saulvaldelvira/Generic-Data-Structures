@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include "../src/Dictionary.h"
 
-int main(){
+int main(void){
 	Dictionary *dict = dict_init(sizeof(char*), sizeof(int), hash_string);
 	for (;;){
 		char option;

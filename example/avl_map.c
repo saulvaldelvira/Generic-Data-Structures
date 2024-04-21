@@ -21,7 +21,7 @@ int compare_pair(const void *e_1, const void *e_2){
 	}
 }
 
-int main(){
+int main(void){
         AVLTree *tree = avl_init(sizeof(struct Pair), compare_pair);
 
         struct Pair p;
@@ -39,4 +39,5 @@ int main(){
         }
 
         avl_free(tree);
+        return 0;
 }
