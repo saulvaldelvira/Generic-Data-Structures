@@ -51,10 +51,10 @@ test: $(TESTFILES) libs | $(BIN)/
 	  $(CC) $(CCFLAGS) -o $(BIN)/$(patsubst %.c,%.out, $(notdir $(T))) $(T) -L./$(BIN)/ -lGDS-static; \
 	  $(NO-RUN) || $(BIN)/$(patsubst %.c,%.out, $(notdir $(T))) || exit 1;)
 
-examples: $(EXAMPLES) $(BIN)/libGDS-static.a | $(BIN)/
+examples: $(EXAMPLES) $(OFILES) | $(BIN)/
 	@ $(foreach F,$(EXAMPLES), \
 		echo " CC $(F)" ; \
-		$(CC) $(CCFLAGS) -o $(patsubst example/%.c,bin/%,$(F)) $(F) -lGDS-static ;)
+		$(CC) $(CCFLAGS) -o $(patsubst example/%.c,bin/%,$(F)) $(F) $(OFILES) ;)
 
 doxygen: ./doxygen/
 	@ echo -e "\

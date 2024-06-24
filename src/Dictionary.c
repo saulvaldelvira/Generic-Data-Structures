@@ -5,6 +5,8 @@
 #include "Dictionary.h"
 #include "./util/error.h"
 #include "./Vector.h"
+#include "util/compare.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -150,26 +152,22 @@ void dict_set_destructor(Dictionary *dict, destructor_function_t value_destructo
 }
 //// REDISPERSE ///////////////////////////////////////////////////////////////
 
-struct pair { void *key, *value; };
-
-/**
- * Helper function for redisperse method
- */
-static void copy_elements(void *element, void *args){
+static bool is_full(void *element) {
         DictionaryNode *e = (DictionaryNode*) element;
-        void **argv = (void**) args;
-        struct pair **tail = (struct pair**) argv[0];
-        if (e->state == FULL){
-                tail[0]->key = e->key;
-                tail[0]->value = e->value;
-                tail[0] += 1;
-        }else{
-                destructor_function_t destructor = * (destructor_function_t*) argv[1];
-                if (destructor && e->value)
+        return e->state == FULL;
+}
+
+static void destroy_non_full(void *element, void *args) {
+        DictionaryNode *e = (DictionaryNode*) element;
+        destructor_function_t destructor = * (destructor_function_t*) args;
+        if (e->state != FULL) {
+                if (destructor)
                         destructor(e->value);
                 free(e->key);
                 free(e->value);
         }
+        e->key = NULL;
+        e->value = NULL;
 }
 
 /**
@@ -178,12 +176,9 @@ static void copy_elements(void *element, void *args){
  */
 static int dict_redisperse(Dictionary *dict, size_t new_size){
         assert(dict->n_elements < new_size);
-        // Save the current elements
-        struct pair *elements = (struct pair*) calloc(dict->n_elements, sizeof(*elements));
-        struct pair *tail = elements;
-        if (!elements)
-                return ERROR;
-        vector_map(dict->vec_elements, copy_elements, (void*[]){&tail, &dict->destructor});
+        /* Store FULL nodes in a temporary Vector and destroy the rest */
+        Vector *elements = vector_filter(dict->vec_elements, is_full);
+        vector_map(dict->vec_elements, destroy_non_full, &dict->destructor);
 
         /// Reset the vector
         if (new_size < dict->vec_size)
@@ -195,23 +190,25 @@ static int dict_redisperse(Dictionary *dict, size_t new_size){
         vector_map(dict->vec_elements, init_node, NULL);
 
         // Change vec_size and n_elements
-        size_t n_elements = dict->n_elements;
         dict->n_elements = 0;
         if (dict->vec_size < new_size)
                 dict->prev_vec_size = dict->vec_size;
         else
                 dict->prev_vec_size = get_prev_prime(new_size);
-
         dict->vec_size = new_size;
 
         // Add the elements to the new dictionary
+        status = SUCCESS;
+        size_t n_elements = vector_size(elements);
         for (size_t i = 0; i < n_elements; ++i){
+                DictionaryNode n;
+                vector_at(elements, i, &n);
                 if (status == SUCCESS)
-                        status = dict_put(dict, elements[i].key, elements[i].value);
-                free(elements[i].key);
-                free(elements[i].value);
+                        status = dict_put(dict, n.key, n.value);
+                free(n.key);
+                free(n.value);
         }
-        free(elements);
+        vector_free(elements);
         return status;
 }
 

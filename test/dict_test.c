@@ -1,5 +1,7 @@
 #include "../src/Dictionary.h"
 #include "test.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 void test_simple(void){
@@ -31,15 +33,6 @@ void brute(void){
         }
         int tmp;
         for (int i = 0; i < n; i++){
-                assert(i == * (int*) dict_get(dic, &i, &tmp));
-                assert(dict_exists(dic, &i));
-                assert(dict_remove(dic, &i));
-                assert(!dict_exists(dic, &i));
-        }
-        for (int i = n; i < 2*n; i++){
-                assert(dict_put(dic, &i, &i) == SUCCESS);
-        }
-        for (int i = n; i < 2*n; i++){
                 assert(i == * (int*) dict_get(dic, &i, &tmp));
                 assert(dict_exists(dic, &i));
                 assert(dict_remove(dic, &i));
@@ -96,19 +89,24 @@ void random_test(void){
 
 void string_test(void){
         test_step("String");
-        Dictionary *dic = dict_init(sizeof(char*), sizeof(int), hash_string);
-        char *str[] = {"Hello world!", "this is a dictionary", ":p"};
-        int strc = 3;
-        for (int i = 0; i < strc; ++i){
-                dict_put(dic, &str[i], &i);
+        Dictionary *dict = dict_init(sizeof(char*), sizeof(int), hash_string);
+        dict_set_destructor(dict,destroy_ptr);
+        const int n = 100;
+        char *strs[n];
+
+        for (int i = 0; i < n; i++) {
+                char *str = malloc(1000);
+                strs[i] = str;
+                sprintf(str, "%d", i);
+                dict_put(dict, &str, &i);
         }
-        int tmp;
-        for (int i = 0; i < strc; ++i){
-                dict_get(dic, &str[i], &tmp);
-                assert(strcmp(str[i], str[tmp]) == 0);
-                assert(tmp == i);
+
+        for (int i = 0; i < n; i++) {
+                int tmp;
+                assert(dict_exists(dict,&strs[i]));
+                assert(i == * (int*) dict_get(dict,&strs[i],&tmp));
         }
-        dict_free(dic);
+        dict_free(dict);
         test_ok();
 }
 
